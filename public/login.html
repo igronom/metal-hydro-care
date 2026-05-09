@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetalHydroCare — Вхід</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+
+    html, body {
+      width: 100%; height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(155deg, #0d3d2e 0%, #1a4a6b 45%, #0d2a4a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 55% 50% at 10% 60%, rgba(30,180,130,0.14) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 90% 25%, rgba(20,80,180,0.16) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* --- Card --- */
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 20px;
+      box-shadow: inset 0 0 20px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.3);
+      padding: 36px 32px 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* --- Logo --- */
+    .auth-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .auth-logo-icon {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      box-shadow: inset 0 0 12px rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .auth-logo-title {
+      color: white;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .auth-logo-sub {
+      color: rgba(255,255,255,0.4);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    /* --- Tabs --- */
+    .auth-tabs {
+      display: flex;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 3px;
+      margin-bottom: 24px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .auth-tab.active {
+      background: rgba(255,255,255,0.18);
+      color: white;
+      font-weight: 500;
+    }
+
+    /* --- Fields --- */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .field-input {
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      width: 100%;
+    }
+
+    .field-input::placeholder { color: rgba(255,255,255,0.28); }
+
+    .field-input:focus {
+      border-color: rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.15);
+    }
+
+    .field-input.error {
+      border-color: rgba(255,100,100,0.6);
+    }
+
+    /* Password wrapper */
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap .field-input {
+      padding-right: 42px;
+    }
+
+    .toggle-pass {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+
+    .toggle-pass:hover { color: rgba(255,255,255,0.7); }
+
+    /* --- Error message --- */
+    .error-msg {
+      display: none;
+      background: rgba(255,80,80,0.18);
+      border: 1px solid rgba(255,80,80,0.35);
+      border-radius: 8px;
+      padding: 9px 13px;
+      color: #ffb0b0;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* --- Submit button --- */
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(100,220,180,0.22);
+      border: 1px solid rgba(100,220,180,0.45);
+      color: #a0ffdd;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: system-ui, sans-serif;
+      transition: background 0.15s, box-shadow 0.15s;
+      margin-top: 6px;
+    }
+
+    .submit-btn:hover {
+      background: rgba(100,220,180,0.32);
+      box-shadow: 0 0 16px rgba(100,220,180,0.2);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* --- Spinner --- */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(160,255,221,0.3);
+      border-top-color: #a0ffdd;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="auth-card">
+
+    <div class="auth-logo">
+      <div class="auth-logo-icon">💧</div>
+      <div class="auth-logo-title">MetalHydroCare</div>
+      <div class="auth-logo-sub">Моніторинг важких металів<br>у донних відкладеннях</div>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Вхід</div>
+      <div class="auth-tab" onclick="switchTab('register')">Реєстрація</div>
+    </div>
+
+    <div id="errorMsg" class="error-msg"></div>
+
+    <!-- Логін -->
+    <div id="formLogin">
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="loginEmail" class="field-input" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label class="field-label">Пароль</label>
+        <div class="password-wrap">
+          <input type="password" id="loginPassword" class="field-input" placeholder="••••••••">
+          <button class="toggle-pass" onclick="togglePass('loginPassword', this)">👁</button>
+        </div>
+      </div>
+      <button class="submit-btn" id="loginBtn" onclick="login()">Увійти</button>
+    </div>
+
+    <!-- Реєстрація -->
+    <div id="formRegister" style="display:none;">
+      <div class="field">
+        <label class="field-label">Ім'я</label>
+        <input type="text" id="regName" class="field-input" placeholder="Андрій">
+      </div>
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="regEmail" class="field-input" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label class="field-label">Пароль</label>
+        <div class="password-wrap">
+          <input type="password" id="regPassword" class="field-input" placeholder="мінімум 6 символів">
+          <button class="toggle-pass" onclick="togglePass('regPassword', this)">👁</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Повторіть пароль</label>
+        <div class="password-wrap">
+          <input type="password" id="regPassword2" class="field-input" placeholder="••••••••">
+          <button class="toggle-pass" onclick="togglePass('regPassword2', this)">👁</button>
+        </div>
+      </div>
+      <button class="submit-btn" id="regBtn" onclick="register()">Зареєструватись</button>
+    </div>
+
+  </div>
+
+  <script>
+    const API = '/api/auth';
+
+    function switchTab(tab) {
+      document.querySelectorAll('.auth-tab').forEach((t,i) =>
+        t.classList.toggle('active', (tab==='login' ? i===0 : i===1))
+      );
+      document.getElementById('formLogin').style.display    = tab==='login'    ? 'block' : 'none';
+      document.getElementById('formRegister').style.display = tab==='register' ? 'block' : 'none';
+      showError('');
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.classList.toggle('visible', !!msg);
+    }
+
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.innerHTML = loading
+        ? '<span class="spinner"></span>Зачекайте...'
+        : (btnId === 'loginBtn' ? 'Увійти' : 'Зареєструватись');
+    }
+
+    function togglePass(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const isPass = input.type === 'password';
+      input.type = isPass ? 'text' : 'password';
+      btn.textContent = isPass ? '🙈' : '👁';
+    }
+
+    function saveToken(token, user) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+
+    async function login() {
+      showError('');
+      const email    = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      if (!email || !password) return showError('Введіть email і пароль');
+
+      setLoading('loginBtn', true);
+      try {
+        const res  = await fetch(`${API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) return showError(data.error || 'Помилка входу');
+
+        saveToken(data.token, data.user);
+        window.location.replace('/');
+      } catch {
+        showError('Сервер недоступний');
+      } finally {
+        setLoading('loginBtn', false);
+      }
+    }
+
+    async function register() {
+      showError('');
+      const name      = document.getElementById('regName').value.trim();
+      const email     = document.getElementById('regEmail').value.trim();
+      const password  = document.getElementById('regPassword').value;
+      const password2 = document.getElementById('regPassword2').value;
+
+      if (!name || !email || !password) return showError('Заповніть всі поля');
+      if (password !== password2)        return showError('Паролі не збігаються');
+      if (password.length < 6)           return showError('Пароль мінімум 6 символів');
+
+      setLoading('regBtn', true);
+      try {
+        const res  = await fetch(`${API}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) return showError(data.error || 'Помилка реєстрації');
+
+        saveToken(data.token, data.user);
+        window.location.replace('/');
+      } catch {
+        showError('Сервер недоступний');
+      } finally {
+        setLoading('regBtn', false);
+      }
+    }
+
+    // Enter для сабміту
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const isLogin = document.getElementById('formLogin').style.display !== 'none';
+      isLogin ? login() : register();
+    });
+
+    // Якщо вже залогінений — редірект
+    if (localStorage.getItem('token')) {
+      window.location.replace('/');
+    }
+  </script>
+
+</body>
+</html>

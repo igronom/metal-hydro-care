@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetalHydroCare — Профіль</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-spinner {
+      width: 28px; height: 28px; margin: 0 auto 14px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: rgba(255,255,255,0.5);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .no-right-align td { text-align: left !important; }
+    .quality-good { color: #a0ffd0; }
+    .quality-ok   { color: #ffe090; }
+    .quality-bad  { color: #ffb0b0; }
+
+    /* Кастомний tooltip */
+    .quality-tip {
+      position: static;
+      cursor: default;
+      display: inline-block;
+    }
+    .quality-tip .tip-box {
+      display: none;
+      position: fixed;
+      background: rgba(20, 40, 60, 0.97); 
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      white-space: nowrap;
+      font-size: 12px;
+      color: rgba(255,255,255,0.85);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 9999;
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+    .quality-tip:hover .tip-box { display: block; }
+    .tip-row { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 2px; }
+    .tip-row:last-child { margin-bottom: 0; }
+    .tip-label { color: rgba(255,255,255,0.45); }
+    .tip-val   { font-weight: 500; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="top-bar">
+    <button class="back-btn" onclick="window.location.href='/show_profiles.html'">&#8592; Усі профілі</button>
+    <span id="statusBadge" class="status-badge"></span>
+  </div>
+
+  <!-- Шапка профілю -->
+  <div class="header-card glass" id="headerCard" style="margin-bottom:14px; display:none;">
+    <div>
+      <div class="loc-title" id="locTitle">—</div>
+      <div class="loc-meta"  id="locMeta">—</div>
+      <div class="meta-row">
+        <div class="meta-item">
+          <span class="meta-label">Глибина відбору</span>
+          <span class="meta-val" id="metaDepth">—</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Горизонтів</span>
+          <span class="meta-val" id="metaHorizons">—</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Дата відбору</span>
+          <span class="meta-val" id="metaDate">—</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Проб</span>
+          <span class="meta-val" id="metaProbes">—</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:flex-start;">
+      <button onclick="goEdit()"
+        style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);border-radius:8px;padding:7px 14px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;">
+        ✎ Редагувати
+      </button>
+      <button onclick="deleteProfile()"
+        style="background:rgba(255,60,60,0.15);border:1px solid rgba(255,80,80,0.35);border-radius:8px;padding:7px 14px;color:#ffb0b0;font-size:13px;cursor:pointer;">
+        ✕ Видалити
+      </button>
+    </div>
+  </div>
+
+  <!-- Стан завантаження -->
+  <div id="loadingState" style="text-align:center; padding:60px 20px; color:rgba(255,255,255,0.4);">
+    <div class="loading-spinner"></div>
+    Завантаження...
+  </div>
+
+  <div id="mainContent" style="display:none;">
+
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('chart',this)">Графік C(z)</div>
+      <div class="tab"        onclick="showTab('table',this)">Таблиця</div>
+      <div class="tab"        onclick="showTab('probes',this)">Проби</div>
+    </div>
+
+    <!-- Слайдер часу -->
+    <div class="glass time-control">
+      <div class="time-control-inner">
+        <div class="time-label-block">
+          <span class="time-icon">⏲</span>
+          <div>
+            <span class="time-title">Час моделювання</span>
+          </div>
+        </div>
+        <div class="time-slider-block">
+          <span class="time-day-label">t =</span>
+          <input type="range" id="timeSlider" min="1" max="30" value="1" step="1"
+            class="time-slider" oninput="onTimeChange(this.value)">
+          <span class="time-day-val"><span id="timeVal">1</span> дн.</span>
+        </div>
+        <div class="time-ticks">
+          <span>1</span><span>7</span><span>14</span><span>21</span><span>30</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Графіки -->
+    <div id="tab-chart" class="grid-2">
+      <div class="glass chart-wrap">
+        <div class="section-label">Профіль концентрації</div>
+        <div class="canvas-container"><canvas id="profileChart"></canvas></div>
+      </div>
+      <div class="glass chart-wrap">
+        <div class="section-label">Порівняння з ГДК</div>
+        <div class="canvas-container"><canvas id="gdkChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Таблиця горизонтів -->
+    <div id="tab-table" style="display:none;">
+      <div class="glass table-wrap">
+        <div class="section-label">Значення по горизонтах (мг/кг)</div>
+        <div style="overflow-x:auto;">
+          <table class="no-right-align">
+            <thead>
+              <tr>
+                <th>z, см</th>
+                <th>Fe</th><th>Mn</th><th>Cu</th><th>Zn</th><th>Cd</th><th>Pb</th>
+              </tr>
+            </thead>
+            <tbody id="dataTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Таблиця проб -->
+    <div id="tab-probes" style="display:none;">
+      <div class="glass table-wrap">
+        <div class="section-label">Виміряні проби ґрунту</div>
+        <div style="overflow-x:auto;">
+          <table class="no-right-align">
+            <thead>
+              <tr>
+                <th>Глибина, см</th><th>Час, діб</th>
+                <th>Fe</th><th>Mn</th><th>Cu</th><th>Zn</th><th>Cd</th><th>Pb</th>
+              </tr>
+            </thead>
+            <tbody id="probesTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Зведення по металах -->
+    <div class="glass table-wrap" style="margin-top:14px;">
+      <div class="section-label">Зведення по металах</div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Метал</th>
+              <th>C₀ (мг/кг)</th>
+              <th>D (см²/доба)</th>
+              <th>Точність моделі</th>
+              <th>ГДК</th>
+              <th style="text-align:right;">% від ГДК</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /mainContent -->
+</div><!-- /page -->
+
+<script src="auth.js"></script>
+<script>
+  Auth.require();
+
+  const METALS = ['Fe','Mn','Cu','Zn','Cd','Pb'];
+  const GDK    = { Fe:5.0, Mn:3.0, Cu:1.5, Zn:5.0, Cd:0.2, Pb:1.0 };
+  const COLORS = ['#7ec8e3','#a8e6cf','#ffd3a5','#e8a0bf','#c3b1e1','#f9c784'];
+
+  // Дані профілю
+  let C0 = {};   // { Fe: 12.3, ... }          — нормована концентрація
+  let D  = {};   // { Fe: 0.82, ... }           — коефіцієнти дифузії (числа)
+  let Dquality = {}; // { Fe: { rmse, rSquared } } — якість апроксимації
+  let depths = [];
+  let profileChart = null;
+  let profileData  = null;
+
+  const profileId = new URLSearchParams(window.location.search).get('id');
+  if (!profileId) window.location.href = '/show_profiles.html';
+
+  // ─── Числовий розв'язок на клієнті (неявна схема + метод прогонки) ───
+  const DZ = 0.05; // крок по глибині, см
+  const DT = 0.01; // крок по часу, доби
+
+  function thomasAlgorithm(a, b, c, d) {
+    const n = b.length;
+    const cp = new Float64Array(n);
+    const dp = new Float64Array(n);
+    const x  = new Float64Array(n);
+    cp[0] = c[0] / b[0];
+    dp[0] = d[0] / b[0];
+    for (let i = 1; i < n; i++) {
+      const den = b[i] - a[i] * cp[i-1];
+      cp[i] = c[i] / den;
+      dp[i] = (d[i] - a[i] * dp[i-1]) / den;
+    }
+    x[n-1] = dp[n-1];
+    for (let i = n-2; i >= 0; i--) x[i] = dp[i] - cp[i] * x[i+1];
+    return x;
+  }
+
+  function solveImplicit(C0val, Dval, tEnd, zMax) {
+    const N = Math.round(zMax / DZ);
+    const n = N + 1;
+    const M = Math.round(tEnd / DT);
+    const r = Dval * DT / (DZ * DZ);
+    let C = new Float64Array(n);
+    C[0] = C0val;
+    const a = new Float64Array(n).fill(-r);
+    const b = new Float64Array(n).fill(1 + 2*r);
+    const c = new Float64Array(n).fill(-r);
+    b[0] = 1; c[0] = 0; a[0] = 0;
+    a[N] = -1; b[N] = 1; c[N] = 0;
+    for (let step = 0; step < M; step++) {
+      const d = new Float64Array(n);
+      d[0] = C0val;
+      for (let i = 1; i < N; i++) d[i] = C[i];
+      d[N] = 0;
+      C = thomasAlgorithm(a, b, c, d);
+    }
+    return C;
+  }
+
+  // Кеш: precomputed[t] = [ [C для Fe], [C для Mn], ... ]  t = 1..30
+  const precomputed = {};
+  let precomputeReady = false;
+
+  // Отримати профіль з кешу (або розрахувати якщо ще немає)
+  function calcProfile(t) {
+    if (precomputed[t]) return precomputed[t];
+    // Запасний варіант — розрахувати синхронно якщо кеш ще не готовий
+    return computeForDay(t);
+  }
+
+  // Розрахунок для одного дня
+  function computeForDay(t) {
+    return METALS.map(m => {
+      const c0val = C0[m] || 0;
+      const dval  = D[m]  || null;
+      if (!c0val || !dval || t <= 0) {
+        return depths.map((_, i) => i === 0 ? c0val : 0);
+      }
+      const zMax = Math.max(...depths) + DZ;
+      const Carr = solveImplicit(c0val, dval, t, zMax);
+      return depths.map(z => {
+        const idx = Math.max(0, Math.min(Math.round(z / DZ), Carr.length - 1));
+        return parseFloat(Carr[idx].toFixed(4));
+      });
+    });
+  }
+
+  // Передобчислення всіх 30 днів у фоні через requestIdleCallback
+  // Рахуємо по одному дню за раз щоб не заморожувати UI
+  function precomputeAll() {
+    const T_MAX = 30;
+    let day = 1;
+
+    function computeNext(deadline) {
+      // Поки є час або ще не всі дні пораховані
+      while (day <= T_MAX && (deadline.timeRemaining() > 2 || deadline.didTimeout)) {
+        precomputed[day] = computeForDay(day);
+        day++;
+      }
+      if (day <= T_MAX) {
+        // Ще є дні — запланувати наступну порцію
+        requestIdleCallback(computeNext, { timeout: 500 });
+      } else {
+        precomputeReady = true;
+      }
+    }
+
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(computeNext, { timeout: 500 });
+    } else {
+      // Fallback для Safari — setTimeout з невеликою затримкою
+      function fallback() {
+        const end = Date.now() + 10; // 10ms порція
+        while (day <= T_MAX && Date.now() < end) {
+          precomputed[day] = computeForDay(day);
+          day++;
+        }
+        if (day <= T_MAX) setTimeout(fallback, 20);
+        else precomputeReady = true;
+      }
+      setTimeout(fallback, 100);
+    }
+  }
+
+  // ─── Таби ───────────────────────────────────────
+  function showTab(name, el) {
+    ['chart','table','probes'].forEach(t => {
+      const el2 = document.getElementById(`tab-${t}`);
+      if (el2) el2.style.display = 'none';
+    });
+    const target = document.getElementById(`tab-${name}`);
+    if (target) target.style.display = name === 'chart' ? 'grid' : 'block';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ─── Слайдер часу ───────────────────────────────
+  function onTimeChange(val) {
+    document.getElementById('timeVal').textContent = val;
+    if (!profileChart) return;
+    const data = calcProfile(parseInt(val));
+    profileChart.data.datasets.forEach((ds, i) => { ds.data = data[i]; });
+    profileChart.update();
+    renderHorizonsTable(data);
+  }
+
+  // ─── Таблиця горизонтів ─────────────────────────
+  function renderHorizonsTable(data) {
+    document.getElementById('dataTable').innerHTML = depths.map((z, di) =>
+      `<tr><td>${z}</td>${METALS.map((_,mi) =>
+        `<td>${data[mi][di].toFixed(3)}</td>`
+      ).join('')}</tr>`
+    ).join('');
+  }
+
+  // ─── Таблиця проб ───────────────────────────────
+  function renderProbesTable(probes) {
+    const tbody = document.getElementById('probesTable');
+    if (!probes || !probes.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Проби відсутні</td></tr>';
+      return;
+    }
+    tbody.innerHTML = probes.map(p =>
+      `<tr>
+        <td>${parseFloat(p.depth_cm).toFixed(1)}</td>
+        <td>${parseFloat(p.time_days).toFixed(1)}</td>
+        ${METALS.map(m => {
+          const v = p.values?.[m];
+          return `<td>${v !== undefined ? parseFloat(v).toFixed(3) : '—'}</td>`;
+        }).join('')}
+      </tr>`
+    ).join('');
+  }
+
+  // ─── Зведення по металах ────────────────────────
+  function renderSummary() {
+    document.getElementById('summaryTable').innerHTML = METALS.map(m => {
+      const c0val = C0[m] || 0;
+      const dval  = D[m]  || null;    // число або null
+      const gdk   = GDK[m];
+      const pct   = gdk > 0 ? Math.round(c0val / gdk * 100) : 0;
+      const exceed = pct >= 100;
+
+      // Точність моделі — зрозумілий індикатор замість сухих чисел
+      const r2raw  = Dquality[m]?.rSquared != null ? parseFloat(Dquality[m].rSquared) : null;
+      const rmse   = Dquality[m]?.rmse     != null ? parseFloat(Dquality[m].rmse)     : null;
+
+      let qualityCell;
+      if (dval === null) {
+        qualityCell = '<span style="color:rgba(255,255,255,0.3);">не розраховано</span>';
+      } else if (r2raw === null) {
+        qualityCell = '<span style="color:rgba(255,255,255,0.3);">—</span>';
+      } else {
+        const stars  = r2raw >= 0.95 ? '●●●' : r2raw >= 0.85 ? '●●○' : r2raw >= 0.70 ? '●○○' : '○○○';
+        const label  = r2raw >= 0.95 ? 'Відмінно' : r2raw >= 0.85 ? 'Добре' : r2raw >= 0.70 ? 'Задовільно' : 'Слабо';
+        const color  = r2raw >= 0.95 ? '#a0ffd0' : r2raw >= 0.85 ? '#c8f0a0' : r2raw >= 0.70 ? '#ffe090' : '#ffb0b0';
+        const rmseStr = rmse !== null ? ` ±${rmse.toFixed(3)} мг/кг` : '';
+        const rmseLabel = rmse !== null ? `±${rmse.toFixed(3)} мг/кг` : '—';
+        qualityCell = `
+          <span class="quality-tip">
+            <span style="color:${color};">${stars} ${label}</span>
+            <div class="tip-box">
+              <div class="tip-row">
+                <span class="tip-label">R² (точність)</span>
+                <span class="tip-val" style="color:${color};">${r2raw.toFixed(3)}</span>
+              </div>
+              <div class="tip-row">
+                <span class="tip-label">RMSE (похибка)</span>
+                <span class="tip-val">${rmseLabel}</span>
+              </div>
+            </div>
+          </span>`;
+      }
+
+      return `<tr>
+        <td>${m}</td>
+        <td>${c0val.toFixed(3)}</td>
+        <td>${dval !== null ? dval.toFixed(4) : '—'}</td>
+        <td>${qualityCell}</td>
+        <td>${gdk}</td>
+        <td><span class="${exceed ? 'exceed' : ''}">${pct}%</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ─── Графіки ────────────────────────────────────
+  function initCharts() {
+    const initData = calcProfile(1);
+    renderHorizonsTable(initData);
+
+    // Графік профілю C(z)
+    const profileCtx = document.getElementById('profileChart').getContext('2d');
+    profileChart = new Chart(profileCtx, {
+      type: 'line',
+      data: {
+        labels: depths,
+        datasets: METALS.map((m, i) => ({
+          label:       m,
+          data:        initData[i],
+          borderColor: COLORS[i],
+          backgroundColor: 'transparent',
+          borderWidth: i === 0 ? 2.5 : 1.5,
+          pointRadius: i === 0 ? 3   : 2,
+          tension:     0.4,
+          hidden:      i > 1
+        }))
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 200 },
+        scales: {
+          x: {
+            title: { display:true, text:'z, см', color:'rgba(255,255,255,0.5)', font:{size:11} },
+            ticks: { color:'rgba(255,255,255,0.5)', font:{size:10} },
+            grid:  { color:'rgba(255,255,255,0.07)' }
+          },
+          y: {
+            title: { display:true, text:'C, мг/кг', color:'rgba(255,255,255,0.5)', font:{size:11} },
+            ticks: { color:'rgba(255,255,255,0.5)', font:{size:10} },
+            grid:  { color:'rgba(255,255,255,0.07)' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color:'rgba(255,255,255,0.7)', font:{size:11}, boxWidth:12, padding:8 } }
+        }
+      }
+    });
+
+    // Графік порівняння з ГДК
+    const gdkCtx = document.getElementById('gdkChart').getContext('2d');
+    new Chart(gdkCtx, {
+      type: 'bar',
+      data: {
+        labels: METALS,
+        datasets: [
+          {
+            label: 'C₀ (виміряно)',
+            data:  METALS.map(m => C0[m] || 0),
+            backgroundColor: METALS.map(m => (C0[m]||0) > GDK[m] ? 'rgba(255,100,100,0.7)' : 'rgba(100,200,180,0.7)'),
+            borderRadius: 4
+          },
+          {
+            label: 'ГДК',
+            data:  METALS.map(m => GDK[m]),
+            backgroundColor: 'rgba(255,255,255,0.12)',
+            borderColor:     'rgba(255,255,255,0.35)',
+            borderWidth:     1.5,
+            borderRadius:    4
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { ticks:{color:'rgba(255,255,255,0.6)',font:{size:11}}, grid:{color:'rgba(255,255,255,0.07)'} },
+          y: { ticks:{color:'rgba(255,255,255,0.5)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.07)'} }
+        },
+        plugins: {
+          legend: { labels: { color:'rgba(255,255,255,0.7)', font:{size:11}, boxWidth:12 } }
+        }
+      }
+    });
+  }
+
+  // ─── Перерахувати D вручну ──────────────────────
+  async function recalculate() {
+    const btn = document.getElementById('calcBtn');
+    btn.disabled = true;
+    btn.textContent = '⟳ Розрахунок...';
+    try {
+      const res = await Auth.fetch(`/api/profiles/${profileId}/calculate`, { method: 'POST' });
+      if (!res || !res.ok) { alert('Помилка розрахунку'); return; }
+      const data = await res.json();
+
+      // Оновити D і якість без перезавантаження сторінки
+      for (const [metal, result] of Object.entries(data.results)) {
+        if (!result.skipped && result.D != null) {
+          D[metal] = result.D;
+          Dquality[metal] = { rmse: result.rmse, rSquared: null }; // r2 прийде при наступному GET
+        }
+      }
+      renderSummary();
+      onTimeChange(document.getElementById('timeSlider').value);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⟳ Перерахувати D';
+    }
+  }
+
+  // ─── Завантажити профіль ────────────────────────
+  async function loadProfile() {
+    const res = await Auth.fetch(`/api/profiles/${profileId}`);
+    if (!res) return;
+    if (!res.ok) {
+      document.getElementById('loadingState').innerHTML =
+        '<div style="font-size:32px;margin-bottom:12px;">⚠️</div>Профіль не знайдено';
+      return;
+    }
+
+    profileData = await res.json();
+
+    // ── C0 ──────────────────────────────────────────
+    METALS.forEach(m => {
+      C0[m] = parseFloat(profileData.c0?.[m] || 0);
+    });
+
+    // ── D: підтримка обох форматів відповіді API ────
+    // Формат 1 (об'єкт): diffusion[metal] = { D, rmse, rSquared }
+    // Формат 2 (число):  diffusion[metal] = 0.82
+    METALS.forEach(m => {
+      const raw = profileData.diffusion?.[m];
+      if (raw == null) {
+        D[m] = null;
+        Dquality[m] = { rmse: null, rSquared: null };
+      } else if (typeof raw === 'object') {
+        D[m] = raw.D != null ? parseFloat(raw.D) : null;
+        Dquality[m] = {
+          rmse:      raw.rmse      != null ? parseFloat(raw.rmse)      : null,
+          rSquared:  raw.rSquared  != null ? parseFloat(raw.rSquared)  : null
+        };
+      } else {
+        // просте число
+        D[m] = parseFloat(raw);
+        Dquality[m] = { rmse: null, rSquared: null };
+      }
+    });
+
+    // ── Глибини ─────────────────────────────────────
+    const step  = parseFloat(profileData.depth_step) || 2;
+    const count = parseInt(profileData.horizons)     || 10;
+    depths = Array.from({ length: count + 1 }, (_, i) =>
+      parseFloat((i * step).toFixed(2))
+    );
+
+    // ── Шапка ───────────────────────────────────────
+    document.getElementById('locTitle').textContent = profileData.name;
+    const coords = profileData.latitude && profileData.longitude
+      ? ` · ${parseFloat(profileData.latitude).toFixed(4)}°N ${parseFloat(profileData.longitude).toFixed(4)}°E`
+      : '';
+    document.getElementById('locMeta').textContent      = profileData.river + coords;
+    document.getElementById('metaDepth').textContent    = `${profileData.depth_from}–${profileData.depth_to} см`;
+    document.getElementById('metaHorizons').textContent = profileData.horizons;
+    document.getElementById('metaDate').textContent     = formatDate(profileData.sample_date);
+    document.getElementById('metaProbes').textContent   = profileData.probes?.length || 0;
+
+    // ── Статус-бейдж ────────────────────────────────
+    const maxPct = Math.max(...METALS.map(m => (C0[m] || 0) / (GDK[m] || 1)));
+    const status = maxPct >= 1.5 ? 'crit' : maxPct >= 1.0 ? 'warn' : 'ok';
+    const badge  = document.getElementById('statusBadge');
+    const statusMap = {
+      ok:   { text:'✓ Норма',            bg:'rgba(80,200,140,0.25)',  color:'#a0ffd0', border:'rgba(80,200,140,0.4)'  },
+      warn: { text:'● Увага',            bg:'rgba(255,190,60,0.25)',  color:'#ffe090', border:'rgba(255,190,60,0.4)'  },
+      crit: { text:'⚠ Перевищення норми',bg:'rgba(255,80,80,0.25)',   color:'#ffb0b0', border:'rgba(255,80,80,0.4)'   }
+    };
+    const s = statusMap[status];
+    badge.textContent   = s.text;
+    badge.className     = 'status-badge';
+    badge.style.cssText = `background:${s.bg};color:${s.color};border:1px solid ${s.border};font-size:12px;padding:4px 12px;border-radius:20px;font-weight:500;`;
+
+    // ── Таблиці ─────────────────────────────────────
+    renderProbesTable(profileData.probes);
+    renderSummary();
+
+    // ── Показати контент ────────────────────────────
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('headerCard').style.display   = 'flex';
+    document.getElementById('mainContent').style.display  = 'block';
+
+    initCharts();
+
+    // Запустити передобчислення всіх 30 днів у фоні
+    precomputeAll();
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('uk-UA', { day:'2-digit', month:'2-digit', year:'numeric' });
+  }
+
+  function goEdit() {
+    window.location.href = `/new_profile.html?edit=${profileId}`;
+  }
+
+  async function deleteProfile() {
+    const name = document.getElementById('locTitle').textContent;
+    if (!confirm(`Видалити профіль "${name}"?
+
+Цю дію неможливо скасувати.`)) return;
+
+    const res = await Auth.fetch(`/api/profiles/${profileId}`, { method: 'DELETE' });
+    if (res && res.ok) {
+      window.location.href = '/show_profiles.html';
+    } else {
+      alert('Помилка видалення. Спробуйте ще раз.');
+    }
+  }
+
+  loadProfile();
+
+  // Tooltip — позиціонування над курсором через mousemove
+  document.addEventListener('mousemove', e => {
+    const tip = e.target.closest('.quality-tip');
+    if (!tip) return;
+    const box = tip.querySelector('.tip-box');
+    if (!box) return;
+    const boxW = box.offsetWidth || 160;
+    let left = e.clientX;
+    let top  = e.clientY - box.offsetHeight - 12;
+    // не виходити за правий край
+    if (left + boxW/2 > window.innerWidth - 8) left = window.innerWidth - boxW/2 - 8;
+    // не виходити за лівий край
+    if (left - boxW/2 < 8) left = boxW/2 + 8;
+    // якщо не вміщується зверху — показати знизу
+    if (top < 8) top = e.clientY + 16;
+    box.style.left = left + 'px';
+    box.style.top  = top  + 'px';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetalHydroCare — Новий профіль</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="new_profile.css">
+</head>
+<body>
+<div class="page">
+
+  <div class="top-bar">
+    <button class="back-btn" onclick="window.location.href='/show_profiles.html'">&#8592; Усі профілі</button>
+    <span class="page-title" id="pageTitle">Новий профіль місцевості</span>
+    <div style="width:110px;"></div>
+  </div>
+
+  <!-- 1. Загальна інформація -->
+  <div class="glass form-card">
+    <div class="form-card-header">
+      <span class="form-card-icon">🌍</span>
+      <div>
+        <div class="form-card-title">Загальна інформація</div>
+        <div class="form-card-sub">Назва, водойма, координати</div>
+      </div>
+    </div>
+    <div class="form-grid-2">
+      <div class="field">
+        <label class="field-label">Назва місцевості <span class="req">*</span></label>
+        <input type="text" id="locName" class="field-input" placeholder="напр. Мощун">
+      </div>
+      <div class="field">
+        <label class="field-label">Річка / водойма <span class="req">*</span></label>
+        <input type="text" id="river" class="field-input" placeholder="напр. р. Ірпінь">
+      </div>
+      <div class="field">
+        <label class="field-label">Широта</label>
+        <input type="number" id="lat" class="field-input" placeholder="50.5523" step="0.0001">
+      </div>
+      <div class="field">
+        <label class="field-label">Довгота</label>
+        <input type="number" id="lon" class="field-input" placeholder="30.1348" step="0.0001">
+      </div>
+      <div class="field">
+        <label class="field-label">Дата відбору <span class="req">*</span></label>
+        <input type="date" id="sampleDate" class="field-input">
+      </div>
+      <div class="field">
+        <label class="field-label">Глибина відбору, см</label>
+        <div class="input-row">
+          <input type="number" id="depthFrom" class="field-input" placeholder="від" min="0" value="0">
+          <input type="number" id="depthTo"   class="field-input" placeholder="до"  min="0" value="20">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. C0 -->
+  <div class="glass form-card">
+    <div class="form-card-header">
+      <span class="form-card-icon">△</span>
+      <div>
+        <div class="form-card-title">Нормована концентрація C<sub>0</sub></div>
+        <div class="form-card-sub">Поверхневий шар (z = 0), мг/кг</div>
+      </div>
+    </div>
+    <div class="metals-grid" id="c0Grid"></div>
+  </div>
+
+  <!-- 3. Проби -->
+  <div class="glass form-card">
+    <div class="form-card-header">
+      <span class="form-card-icon">🔬</span>
+      <div>
+        <div class="form-card-title">Проби ґрунту</div>
+        <div class="form-card-sub">Глибина 2–5 см, час 5–10 діб після взяття C<sub>0</sub></div>
+      </div>
+      <button class="add-probe-btn" onclick="addProbe()">+ Додати пробу</button>
+    </div>
+    <div class="probes-hint">
+      <span class="hint-icon">ℹ</span>
+      Кожна проба містить концентрації всіх металів на певній глибині і в певний момент часу. Мінімум 2 проби для розрахунку D.
+    </div>
+    <div id="probesContainer"></div>
+  </div>
+
+  <!-- 4. Параметри -->
+  <div class="glass form-card">
+    <div class="form-card-header">
+      <span class="form-card-icon">↕</span>
+      <div>
+        <div class="form-card-title">Параметри моделювання</div>
+        <div class="form-card-sub">Для побудови графіка C(z,t)</div>
+      </div>
+    </div>
+    <div class="form-grid-2">
+      <div class="field">
+        <label class="field-label">Кількість горизонтів</label>
+        <input type="number" id="horizons"  class="field-input" value="10" min="2" max="50">
+      </div>
+      <div class="field">
+        <label class="field-label">Крок глибини, см</label>
+        <input type="number" id="depthStep" class="field-input" value="2"  min="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div id="errorMsg" style="display:none;background:rgba(255,80,80,0.18);border:1px solid rgba(255,80,80,0.35);border-radius:10px;padding:12px 16px;color:#ffb0b0;font-size:14px;margin-bottom:14px;"></div>
+
+  <!-- Footer -->
+  <div class="form-footer">
+    <button class="cancel-btn" onclick="window.location.href='/show_profiles.html'">Скасувати</button>
+    <button class="save-btn" id="saveBtn" onclick="saveProfile()">✓ Зберегти профіль</button>
+  </div>
+
+</div>
+
+<script src="auth.js"></script>
+<script>
+  Auth.require();
+
+  const METALS = ['Fe','Mn','Cu','Zn','Cd','Pb'];
+  let probeCount = 0;
+  let probeIds   = []; // для видалення
+
+  // Режим редагування
+  const editId = new URLSearchParams(window.location.search).get('edit');
+  if (editId) {
+    document.getElementById('pageTitle').textContent = 'Редагувати профіль';
+    document.getElementById('saveBtn').textContent   = '✓ Зберегти зміни';
+  }
+
+  // Генерація полів C0
+  const c0Grid = document.getElementById('c0Grid');
+  METALS.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'metal-field';
+    div.innerHTML = `
+      <label class="metal-label">${m}</label>
+      <div class="metal-input-wrap">
+        <input type="number" id="c0_${m}" class="field-input metal-input"
+          placeholder="0.000" min="0" step="0.001">
+        <span class="metal-unit">мг/кг</span>
+      </div>`;
+    c0Grid.appendChild(div);
+  });
+
+  // Додати пробу
+  function addProbe() {
+    probeCount++;
+    const id = probeCount;
+    probeIds.push(id);
+    const container = document.getElementById('probesContainer');
+    const probe = document.createElement('div');
+    probe.className = 'probe-block glass-inner';
+    probe.id = `probe_${id}`;
+    probe.innerHTML = `
+      <div class="probe-header">
+        <span class="probe-num">Проба ${id}</span>
+        <div class="probe-meta-row">
+          <div class="probe-meta-field">
+            <label class="field-label">Глибина, см</label>
+            <input type="number" class="field-input probe-depth" placeholder="2–5"
+              min="0.5" max="20" step="0.5" id="probe_${id}_depth">
+          </div>
+          <div class="probe-meta-field">
+            <label class="field-label">Час після C<sub>0</sub>, діб</label>
+            <input type="number" class="field-input probe-time" placeholder="5–10"
+              min="1" max="30" step="1" id="probe_${id}_time">
+          </div>
+        </div>
+        ${probeIds.length > 2 ? `<button class="remove-btn" onclick="removeProbe(${id})">✕</button>` : ''}
+      </div>
+      <div class="probe-metals-grid">
+        ${METALS.map(m => `
+          <div class="metal-field">
+            <label class="metal-label">${m}</label>
+            <div class="metal-input-wrap">
+              <input type="number" id="probe_${id}_${m}"
+                class="field-input metal-input" placeholder="0.000" min="0" step="0.001">
+              <span class="metal-unit">мг/кг</span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    container.appendChild(probe);
+    probe.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function removeProbe(id) {
+    document.getElementById(`probe_${id}`)?.remove();
+    probeIds = probeIds.filter(i => i !== id);
+  }
+
+  // Ініціалізація — 2 порожні проби тільки якщо НЕ режим редагування
+  if (!editId) { addProbe(); addProbe(); }
+
+  // Показати помилку
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+    if (msg) el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  // Зібрати дані форми
+  function collectData() {
+    const c0 = {};
+    METALS.forEach(m => {
+      const v = parseFloat(document.getElementById(`c0_${m}`).value);
+      if (!isNaN(v)) c0[m] = v;
+    });
+
+    const probes = probeIds
+      .filter(id => document.getElementById(`probe_${id}`))
+      .map(id => {
+        const depth = parseFloat(document.getElementById(`probe_${id}_depth`).value);
+        const time  = parseFloat(document.getElementById(`probe_${id}_time`).value);
+        const values = {};
+        METALS.forEach(m => {
+          const v = parseFloat(document.getElementById(`probe_${id}_${m}`).value);
+          if (!isNaN(v)) values[m] = v;
+        });
+        return { depth_cm: depth, time_days: time, values };
+      });
+
+    return {
+      name:        document.getElementById('locName').value.trim(),
+      river:       document.getElementById('river').value.trim(),
+      latitude:    parseFloat(document.getElementById('lat').value) || null,
+      longitude:   parseFloat(document.getElementById('lon').value) || null,
+      sample_date: document.getElementById('sampleDate').value,
+      depth_from:  parseFloat(document.getElementById('depthFrom').value) || 0,
+      depth_to:    parseFloat(document.getElementById('depthTo').value)   || 20,
+      horizons:    parseInt(document.getElementById('horizons').value)    || 10,
+      depth_step:  parseFloat(document.getElementById('depthStep').value) || 2,
+      c0,
+      probes
+    };
+  }
+
+  // Завантажити дані для редагування
+  async function loadForEdit() {
+    const res = await Auth.fetch(`/api/profiles/${editId}`);
+    if (!res || !res.ok) return;
+    const p = await res.json();
+
+    document.getElementById('locName').value    = p.name || '';
+    document.getElementById('river').value      = p.river || '';
+    document.getElementById('lat').value        = p.latitude || '';
+    document.getElementById('lon').value        = p.longitude || '';
+    document.getElementById('sampleDate').value = p.sample_date?.slice(0,10) || '';
+    document.getElementById('depthFrom').value  = p.depth_from || 0;
+    document.getElementById('depthTo').value    = p.depth_to   || 20;
+    document.getElementById('horizons').value   = p.horizons   || 10;
+    document.getElementById('depthStep').value  = p.depth_step || 2;
+
+    if (p.c0) {
+      METALS.forEach(m => {
+        const el = document.getElementById(`c0_${m}`);
+        if (el && p.c0[m] !== undefined) el.value = p.c0[m];
+      });
+    }
+
+    // Заповнити існуючі проби
+    if (p.probes && p.probes.length) {
+      p.probes.forEach(probe => {
+        addProbe();
+        const id = probeCount;
+        const depthEl = document.getElementById(`probe_${id}_depth`);
+        const timeEl  = document.getElementById(`probe_${id}_time`);
+        if (depthEl) depthEl.value = probe.depth_cm;
+        if (timeEl)  timeEl.value  = probe.time_days;
+        METALS.forEach(m => {
+          const el = document.getElementById(`probe_${id}_${m}`);
+          if (el && probe.values?.[m] !== undefined) el.value = probe.values[m];
+        });
+      });
+    } else {
+      // Якщо проб немає — додати 2 порожні
+      addProbe();
+      addProbe();
+    }
+  }
+
+  if (editId) loadForEdit();
+
+  // Зберегти
+  async function saveProfile() {
+    showError('');
+    const data = collectData();
+
+    if (!data.name)        return showError('Вкажіть назву місцевості');
+    if (!data.river)       return showError('Вкажіть річку або водойму');
+    if (!data.sample_date) return showError('Вкажіть дату відбору');
+
+    const activePprobes = data.probes.filter(p => !isNaN(p.depth_cm) && !isNaN(p.time_days));
+    if (activePprobes.length < 2) return showError('Додайте мінімум 2 проби з глибиною і часом');
+    data.probes = activePprobes;
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(160,255,221,0.3);border-top-color:#a0ffdd;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;"></span>Збереження...';
+
+    try {
+      const url    = editId ? `/api/profiles/${editId}` : '/api/profiles';
+      const method = editId ? 'PUT' : 'POST';
+
+      const res = await Auth.fetch(url, {
+        method,
+        body: JSON.stringify(data)
+      });
+
+      if (!res || !res.ok) {
+        const err = await res?.json();
+        showError(err?.error || 'Помилка збереження');
+        return;
+      }
+
+      const saved = await res.json();
+      window.location.href = `/show_profile.html?id=${saved.id || editId}`;
+    } catch {
+      showError('Сервер недоступний');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '✓ Зберегти профіль';
+    }
+  }
+</script>
+
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</body>
+</html>

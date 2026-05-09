@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetalHydroCare — Профілі</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .page-title { color: white; font-size: 18px; font-weight: 500; }
+    .user-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 5px 12px 5px 7px;
+    }
+    .user-avatar {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(100,200,180,0.4);
+      border: 1px solid rgba(255,255,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: white; font-weight: 600;
+    }
+    .user-name { font-size: 13px; color: rgba(255,255,255,0.8); }
+
+    .search-bar {
+      width: 100%;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .search-bar::placeholder { color: rgba(255,255,255,0.35); }
+    .search-bar:focus { border-color: rgba(255,255,255,0.5); }
+
+    .filter-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .filter-tab {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.08); transition: all 0.15s;
+    }
+    .filter-tab.active { background: rgba(255,255,255,0.22); color: white; border-color: rgba(255,255,255,0.45); }
+
+    .profiles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .profile-card {
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 14px;
+      box-shadow: inset 0 0 8px rgba(255,255,255,0.07);
+      padding: 16px;
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+    .profile-card:hover {
+      box-shadow: inset 0 0 14px rgba(255,255,255,0.18), 0 4px 16px rgba(0,0,0,0.2);
+      transform: translateY(-2px);
+    }
+
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+    .card-icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .status-ok   { background: rgba(80,200,140,0.3);  color: #a0ffd0; border: 1px solid rgba(80,200,140,0.4);  font-size:11px; padding:3px 8px; border-radius:10px; font-weight:500; }
+    .status-warn { background: rgba(255,190,60,0.3);  color: #ffe090; border: 1px solid rgba(255,190,60,0.4);  font-size:11px; padding:3px 8px; border-radius:10px; font-weight:500; }
+    .status-crit { background: rgba(255,80,80,0.25);  color: #ffb0b0; border: 1px solid rgba(255,80,80,0.4);   font-size:11px; padding:3px 8px; border-radius:10px; font-weight:500; }
+
+    .card-name { color: white; font-size: 15px; font-weight: 500; margin-bottom: 3px; }
+    .card-meta { color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 12px; }
+
+    .mini-bars { display: flex; gap: 3px; align-items: flex-end; height: 28px; margin-bottom: 10px; }
+    .bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+    .mini-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 3px; }
+    .bar-lbl { font-size: 9px; color: rgba(255,255,255,0.45); }
+
+    .metals-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+    .metal-chip {
+      font-size: 11px; padding: 2px 7px; border-radius: 6px;
+      background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.8);
+    }
+    .metal-chip.high { background: rgba(255,100,80,0.22); border-color: rgba(255,100,80,0.4); color: #ffb8b0; }
+
+    .card-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid rgba(255,255,255,0.12); padding-top: 10px;
+    }
+    .card-date { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .open-btn {
+      font-size: 12px; color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 6px; padding: 4px 10px; cursor: pointer;
+    }
+
+    .add-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px dashed rgba(255,255,255,0.22);
+      border-radius: 14px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 180px; gap: 10px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .add-card:hover { background: rgba(255,255,255,0.10); }
+    .add-card-plus { font-size: 28px; color: rgba(255,255,255,0.3); }
+    .add-card-text { font-size: 13px; color: rgba(255,255,255,0.4); text-align: center; }
+
+    /* Loading / empty */
+    .state-box {
+      text-align: center; padding: 60px 20px;
+      color: rgba(255,255,255,0.4); font-size: 14px;
+    }
+    .state-box .icon { font-size: 36px; margin-bottom: 12px; }
+
+    .spinner {
+      width: 28px; height: 28px; margin: 0 auto 14px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: rgba(255,255,255,0.5);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 8px; padding: 6px 12px;
+      color: rgba(255,255,255,0.55); font-size: 12px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <div class="page-title">Профілі місцевостей</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <span class="user-name" id="userName">...</span>
+      </div>
+      <button class="logout-btn" onclick="Auth.logout()">↩ Вийти</button>
+    </div>
+  </div>
+
+  <input class="search-bar" id="searchInput" placeholder="Пошук за назвою або річкою..." oninput="renderCards()">
+
+  <div class="filter-tabs">
+    <div class="filter-tab active" data-filter="all"   onclick="setFilter('all',this)">Всі</div>
+    <div class="filter-tab"        data-filter="ok"    onclick="setFilter('ok',this)">Норма</div>
+    <div class="filter-tab"        data-filter="warn"  onclick="setFilter('warn',this)">Увага</div>
+    <div class="filter-tab"        data-filter="crit"  onclick="setFilter('crit',this)">Перевищення</div>
+  </div>
+
+  <div class="profiles-grid" id="profilesGrid">
+    <div class="state-box" style="grid-column:1/-1;">
+      <div class="spinner"></div>
+      Завантаження...
+    </div>
+  </div>
+
+</div>
+
+<script src="auth.js"></script>
+<script>
+  Auth.require();
+
+  const METALS = ['Fe','Mn','Cu','Zn','Cd','Pb'];
+  const GDK    = { Fe:5.0, Mn:3.0, Cu:1.5, Zn:5.0, Cd:0.2, Pb:1.0 };
+  const COLORS  = { ok:'rgba(100,200,255,0.6)', warn:'rgba(255,180,60,0.7)', crit:'rgba(255,100,100,0.7)' };
+
+  let allProfiles = [];
+  let currentFilter = 'all';
+
+  // Заповнити чіп користувача
+  const user = Auth.getUser();
+  if (user) {
+    document.getElementById('userName').textContent = user.name;
+    document.getElementById('userAvatar').textContent = user.name.slice(0,2).toUpperCase();
+  }
+
+  // Визначити статус профілю по C0
+  function getStatus(c0) {
+    if (!c0) return 'ok';
+    const maxPct = Math.max(...METALS.map(m => c0[m] ? (c0[m] / GDK[m]) : 0));
+    if (maxPct >= 1.5) return 'crit';
+    if (maxPct >= 1.0) return 'warn';
+    return 'ok';
+  }
+
+  function statusLabel(s) {
+    return s === 'crit' ? '⚠ Перевищення' : s === 'warn' ? '● Увага' : '✓ Норма';
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('uk-UA', { month:'2-digit', year:'numeric' });
+  }
+
+  function setFilter(f, el) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderCards();
+  }
+
+  function renderCards() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const grid  = document.getElementById('profilesGrid');
+
+    let filtered = allProfiles.filter(p => {
+      const matchSearch = p.name.toLowerCase().includes(query) || p.river.toLowerCase().includes(query);
+      const status = getStatus(p.c0);
+      const matchFilter = currentFilter === 'all' || status === currentFilter;
+      return matchSearch && matchFilter;
+    });
+
+    // Оновити лічильники табів
+    document.querySelector('[data-filter="all"]').textContent   = `Всі (${allProfiles.length})`;
+    document.querySelector('[data-filter="ok"]').textContent    = `Норма (${allProfiles.filter(p=>getStatus(p.c0)==='ok').length})`;
+    document.querySelector('[data-filter="warn"]').textContent  = `Увага (${allProfiles.filter(p=>getStatus(p.c0)==='warn').length})`;
+    document.querySelector('[data-filter="crit"]').textContent  = `Перевищення (${allProfiles.filter(p=>getStatus(p.c0)==='crit').length})`;
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="state-box" style="grid-column:1/-1;">
+          <div class="icon">🔍</div>
+          Профілів не знайдено
+        </div>
+        <div class="add-card" onclick="window.location.href='/new_profile.html'">
+          <div class="add-card-plus">+</div>
+          <div class="add-card-text">Додати новий профіль місцевості</div>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(p => {
+      const status = getStatus(p.c0);
+      const c0 = p.c0 || {};
+      const maxVal = Math.max(...METALS.map(m => c0[m] || 0));
+
+      const bars = METALS.map(m => {
+        const val = c0[m] || 0;
+        const pct = maxVal > 0 ? (val / maxVal * 100) : 5;
+        const exceed = val > GDK[m];
+        const color = exceed ? COLORS.crit : COLORS.ok;
+        return `<div class="bar-wrap">
+          <div class="mini-bar" style="height:${Math.max(pct,5)}%;background:${color}"></div>
+          <span class="bar-lbl">${m}</span>
+        </div>`;
+      }).join('');
+
+      const chips = METALS.map(m => {
+        const val = c0[m];
+        if (!val) return '';
+        const exceed = val > GDK[m];
+        return `<span class="metal-chip ${exceed?'high':''}">${m} ${parseFloat(val).toFixed(2)}${exceed?' ↑':''}</span>`;
+      }).join('');
+
+      const coords = p.latitude && p.longitude
+        ? `${parseFloat(p.latitude).toFixed(4)}°N ${parseFloat(p.longitude).toFixed(4)}°E`
+        : '';
+
+      return `
+        <div class="profile-card" onclick="window.location.href='/show_profile.html?id=${p.id}'">
+          <div class="card-header">
+            <div class="card-icon">💧</div>
+            <span class="status-${status}">${statusLabel(status)}</span>
+          </div>
+          <div class="card-name">${p.name}</div>
+          <div class="card-meta">${p.river}${coords ? ' · ' + coords : ''}</div>
+          <div class="mini-bars">${bars}</div>
+          <div class="metals-row">${chips || '<span style="color:rgba(255,255,255,0.3);font-size:12px;">Дані відсутні</span>'}</div>
+          <div class="card-footer">
+            <span class="card-date">Оновлено: ${formatDate(p.updated_at)}</span>
+            <button class="open-btn">Відкрити →</button>
+          </div>
+        </div>`;
+    }).join('') + `
+      <div class="add-card" onclick="window.location.href='/new_profile.html'">
+        <div class="add-card-plus">+</div>
+        <div class="add-card-text">Додати новий профіль місцевості</div>
+      </div>`;
+
+    grid.innerHTML = grid.innerHTML; // re-render
+  }
+
+  // Завантажити профілі з API
+  async function loadProfiles() {
+    const res = await Auth.fetch('/api/profiles');
+    if (!res) return;
+    if (!res.ok) {
+      document.getElementById('profilesGrid').innerHTML =
+        '<div class="state-box" style="grid-column:1/-1;"><div class="icon">⚠️</div>Помилка завантаження</div>';
+      return;
+    }
+    allProfiles = await res.json();
+    renderCards();
+  }
+
+  loadProfiles();
+</script>
+</body>
+</html>
