@@ -28,8 +28,7 @@ async function initDB() {
         password    VARCHAR(255) NOT NULL,
         created_at  TIMESTAMP DEFAULT NOW()
       );
-
-      CREATE TABLE IF NOT EXISTS profiles (
+\      CREATE TABLE IF NOT EXISTS profiles (
         id            SERIAL PRIMARY KEY,
         user_id       INTEGER REFERENCES users(id) ON DELETE CASCADE,
         name          VARCHAR(200) NOT NULL,
@@ -45,7 +44,6 @@ async function initDB() {
         created_at    TIMESTAMP DEFAULT NOW(),
         updated_at    TIMESTAMP DEFAULT NOW()
       );
-
       CREATE TABLE IF NOT EXISTS concentrations_c0 (
         id          SERIAL PRIMARY KEY,
         profile_id  INTEGER REFERENCES profiles(id) ON DELETE CASCADE,
@@ -53,7 +51,6 @@ async function initDB() {
         value       NUMERIC(12,4) NOT NULL,
         UNIQUE(profile_id, metal)
       );
-
       CREATE TABLE IF NOT EXISTS probes (
         id          SERIAL PRIMARY KEY,
         profile_id  INTEGER REFERENCES profiles(id) ON DELETE CASCADE,
@@ -61,7 +58,6 @@ async function initDB() {
         time_days   NUMERIC(5,1) NOT NULL,
         created_at  TIMESTAMP DEFAULT NOW()
       );
-
       CREATE TABLE IF NOT EXISTS probe_values (
         id        SERIAL PRIMARY KEY,
         probe_id  INTEGER REFERENCES probes(id) ON DELETE CASCADE,
@@ -69,7 +65,6 @@ async function initDB() {
         value     NUMERIC(12,4) NOT NULL,
         UNIQUE(probe_id, metal)
       );
-
       CREATE TABLE IF NOT EXISTS diffusion_coefficients (
         id          SERIAL PRIMARY KEY,
         profile_id  INTEGER REFERENCES profiles(id) ON DELETE CASCADE,
@@ -80,14 +75,11 @@ async function initDB() {
         UNIQUE(profile_id, metal)
       );
     `);
-
-    // Додати нові колонки якщо таблиця вже існує (міграція)
     await client.query(`
       ALTER TABLE diffusion_coefficients
         ADD COLUMN IF NOT EXISTS rmse      NUMERIC(12,6),
-        ADD COLUMN IF NOT EXISTS r_squared NUMERIC(8,6);
+        ADD COLUMN IF NOT EXISTS r_squared NUMERIC(10,6);
     `);
-
     console.log('✅ База даних ініціалізована');
   } finally {
     client.release();
