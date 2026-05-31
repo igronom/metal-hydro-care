@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetalHydroCare — Мій профіль</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .profile-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 32px 20px 24px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .avatar-big {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(100,200,180,0.25);
+      border: 2px solid rgba(255,255,255,0.35);
+      box-shadow: inset 0 0 16px rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 600; color: white;
+    }
+
+    .hero-name {
+      font-size: 22px; font-weight: 500; color: white;
+    }
+
+    .hero-email {
+      font-size: 14px; color: rgba(255,255,255,0.5);
+      margin-top: -8px;
+    }
+
+    .info-card {
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .info-val {
+      font-size: 14px;
+      color: rgba(255,255,255,0.85);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .copy-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 5px;
+      padding: 3px 8px;
+      color: rgba(255,255,255,0.5);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* Форма редагування */
+    .edit-card {
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+
+    .edit-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .edit-card-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: white;
+    }
+
+    .edit-card-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 2px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+
+    .field-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .field-input {
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      width: 100%;
+      font-family: system-ui, sans-serif;
+    }
+
+    .field-input::placeholder { color: rgba(255,255,255,0.28); }
+    .field-input:focus {
+      border-color: rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.15);
+    }
+    .field-input.error { border-color: rgba(255,100,100,0.6); }
+
+    .password-wrap { position: relative; }
+    .password-wrap .field-input { padding-right: 42px; }
+    .toggle-pass {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer; font-size: 16px;
+      transition: color 0.15s;
+    }
+    .toggle-pass:hover { color: rgba(255,255,255,0.7); }
+
+    .error-msg {
+      display: none;
+      background: rgba(255,80,80,0.18);
+      border: 1px solid rgba(255,80,80,0.35);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #ffb0b0;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+    .error-msg.visible { display: block; }
+
+    .success-msg {
+      display: none;
+      background: rgba(80,200,140,0.18);
+      border: 1px solid rgba(80,200,140,0.35);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #a0ffd0;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+    .success-msg.visible { display: block; }
+
+    .form-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .save-btn {
+      background: rgba(100,220,180,0.22);
+      border: 1px solid rgba(100,220,180,0.45);
+      border-radius: 10px;
+      padding: 10px 24px;
+      color: #a0ffdd;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: system-ui, sans-serif;
+      transition: background 0.15s;
+    }
+    .save-btn:hover { background: rgba(100,220,180,0.32); }
+    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .danger-card {
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      border-color: rgba(255,80,80,0.3);
+      background: rgba(255,60,60,0.08);
+    }
+
+    .danger-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffb0b0;
+      margin-bottom: 6px;
+    }
+
+    .danger-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .danger-btn {
+      background: rgba(255,60,60,0.18);
+      border: 1px solid rgba(255,80,80,0.4);
+      border-radius: 8px;
+      padding: 9px 18px;
+      color: #ffb0b0;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: system-ui, sans-serif;
+      transition: background 0.15s;
+    }
+    .danger-btn:hover { background: rgba(255,60,60,0.3); }
+
+    .spinner {
+      display: inline-block;
+      width: 13px; height: 13px;
+      border: 2px solid rgba(160,255,221,0.3);
+      border-top-color: #a0ffdd;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="top-bar">
+    <button class="back-btn" onclick="window.location.href='/show_profiles.html'">&#8592; Профілі</button>
+    <span style="color:rgba(255,255,255,0.8);font-size:15px;font-weight:500;">Мій профіль</span>
+    <div style="width:90px;"></div>
+  </div>
+
+  <!-- Герой -->
+  <div class="glass profile-hero">
+    <div class="avatar-big" id="avatarBig">?</div>
+    <div class="hero-name" id="heroName">—</div>
+    <div class="hero-email" id="heroEmail">—</div>
+  </div>
+
+  <!-- Інформація -->
+  <div class="glass info-card">
+    <div class="section-label" style="margin-bottom:12px;">Інформація про акаунт</div>
+    <div class="info-row">
+      <span class="info-label">ID користувача</span>
+      <span class="info-val">
+        <span id="userId">—</span>
+        <button class="copy-btn" onclick="copyText('userId')">Копіювати</button>
+      </span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Email</span>
+      <span class="info-val">
+        <span id="userEmail">—</span>
+        <button class="copy-btn" onclick="copyText('userEmail')">Копіювати</button>
+      </span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Ім'я</span>
+      <span class="info-val" id="userName">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Дата реєстрації</span>
+      <span class="info-val" id="userCreated">—</span>
+    </div>
+  </div>
+
+  <!-- Редагування -->
+  <div class="glass edit-card">
+    <div class="edit-card-header">
+      <span style="font-size:18px;">✎</span>
+      <div>
+        <div class="edit-card-title">Редагувати профіль</div>
+        <div class="edit-card-sub">Змінити ім'я, email або пароль</div>
+      </div>
+    </div>
+
+    <div id="errorMsg" class="error-msg"></div>
+    <div id="successMsg" class="success-msg"></div>
+
+    <div class="field">
+      <label class="field-label">Ім'я</label>
+      <input type="text" id="editName" class="field-input" placeholder="Ваше ім'я">
+    </div>
+
+    <div class="field">
+      <label class="field-label">Email</label>
+      <input type="email" id="editEmail" class="field-input" placeholder="email@example.com">
+    </div>
+
+    <div class="section-label" style="margin: 16px 0 12px;">Змінити пароль</div>
+
+    <div class="field">
+      <label class="field-label">Поточний пароль</label>
+      <div class="password-wrap">
+        <input type="password" id="currentPassword" class="field-input" placeholder="••••••••">
+        <button class="toggle-pass" onclick="togglePass('currentPassword', this)">👁</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Новий пароль</label>
+      <div class="password-wrap">
+        <input type="password" id="newPassword" class="field-input" placeholder="мінімум 6 символів">
+        <button class="toggle-pass" onclick="togglePass('newPassword', this)">👁</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Повторіть новий пароль</label>
+      <div class="password-wrap">
+        <input type="password" id="newPassword2" class="field-input" placeholder="••••••••">
+        <button class="toggle-pass" onclick="togglePass('newPassword2', this)">👁</button>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="save-btn" id="saveBtn" onclick="saveProfile()">
+        ✓ Зберегти зміни
+      </button>
+    </div>
+  </div>
+
+  <!-- Небезпечна зона -->
+  <div class="glass danger-card">
+    <div class="danger-title">⚠ Небезпечна зона</div>
+    <div class="danger-sub">
+      Після видалення акаунту всі профілі місцевостей і дані будуть безповоротно втрачені.
+    </div>
+    <button class="danger-btn" onclick="deleteAccount()">
+      Видалити акаунт
+    </button>
+  </div>
+
+</div>
+
+<script src="auth.js"></script>
+<script>
+  Auth.require();
+
+  // Завантажити дані користувача
+  async function loadUser() {
+    const res = await Auth.fetch('/api/auth/me');
+    if (!res || !res.ok) return;
+    const { user } = await res.json();
+
+    const initials = user.name.slice(0, 2).toUpperCase();
+    document.getElementById('avatarBig').textContent  = initials;
+    document.getElementById('heroName').textContent   = user.name;
+    document.getElementById('heroEmail').textContent  = user.email;
+    document.getElementById('userId').textContent     = user.id;
+    document.getElementById('userEmail').textContent  = user.email;
+    document.getElementById('userName').textContent   = user.name;
+    document.getElementById('userCreated').textContent =
+      user.created_at
+        ? new Date(user.created_at).toLocaleDateString('uk-UA', { day:'2-digit', month:'long', year:'numeric' })
+        : '—';
+
+    // Заповнити форму
+    document.getElementById('editName').value  = user.name;
+    document.getElementById('editEmail').value = user.email;
+  }
+
+  // Копіювати текст
+  function copyText(elId) {
+    const text = document.getElementById(elId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = event.target;
+      btn.textContent = '✓ Скопійовано';
+      setTimeout(() => btn.textContent = 'Копіювати', 1500);
+    });
+  }
+
+  // Показати/сховати пароль
+  function togglePass(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    btn.textContent = isPass ? '🙈' : '👁';
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.toggle('visible', !!msg);
+    document.getElementById('successMsg').classList.remove('visible');
+  }
+
+  function showSuccess(msg) {
+    const el = document.getElementById('successMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  // Зберегти зміни
+  async function saveProfile() {
+    showError('');
+    const name     = document.getElementById('editName').value.trim();
+    const email    = document.getElementById('editEmail').value.trim();
+    const current  = document.getElementById('currentPassword').value;
+    const newPass  = document.getElementById('newPassword').value;
+    const newPass2 = document.getElementById('newPassword2').value;
+
+    if (!name)  return showError('Введіть ім\'я');
+    if (!email) return showError('Введіть email');
+
+    // Перевірка пароля тільки якщо заповнений
+    if (newPass || newPass2 || current) {
+      if (!current)           return showError('Введіть поточний пароль');
+      if (!newPass)           return showError('Введіть новий пароль');
+      if (newPass.length < 6) return showError('Новий пароль мінімум 6 символів');
+      if (newPass !== newPass2) return showError('Паролі не збігаються');
+    }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Збереження...';
+
+    try {
+      const body = { name, email };
+      if (newPass && current) {
+        body.currentPassword = current;
+        body.newPassword     = newPass;
+      }
+
+      const res = await Auth.fetch('/api/auth/update', {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      });
+
+      if (!res || !res.ok) {
+        const err = await res?.json();
+        return showError(err?.error || 'Помилка збереження');
+      }
+
+      const data = await res.json();
+
+      // Оновити токен якщо повернули новий
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      // Очистити поля пароля
+      document.getElementById('currentPassword').value = '';
+      document.getElementById('newPassword').value     = '';
+      document.getElementById('newPassword2').value    = '';
+
+      showSuccess('Зміни збережено успішно');
+      loadUser();
+    } catch {
+      showError('Сервер недоступний');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '✓ Зберегти зміни';
+    }
+  }
+
+  // Видалити акаунт
+  async function deleteAccount() {
+    const name = document.getElementById('heroName').textContent;
+    if (!confirm(`Видалити акаунт "${name}"?\n\nВсі профілі будуть безповоротно втрачені.`)) return;
+
+    const res = await Auth.fetch('/api/auth/delete', { method: 'DELETE' });
+    if (res && res.ok) {
+      Auth.logout();
+    } else {
+      alert('Помилка видалення. Спробуйте ще раз.');
+    }
+  }
+
+  loadUser();
+</script>
+</body>
+</html>
